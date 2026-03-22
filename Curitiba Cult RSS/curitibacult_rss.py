@@ -2,6 +2,7 @@ import requests
 from datetime import datetime
 from email.utils import format_datetime
 from xml.sax.saxutils import escape
+import html
 
 URL = "https://curitibacult.com.br"
 WP_API = f"{URL}/wp-json/wp/v2/posts"
@@ -34,7 +35,7 @@ def fetch_posts():
 
     for item in data:
         try:
-            title = item.get("title", {}).get("rendered", "").strip()
+            title = html.unescape(item.get("title", {}).get("rendered", "").strip())
             link = item.get("link", "")
             date_str = item.get("date_gmt") or item.get("date")
 
@@ -45,7 +46,7 @@ def fetch_posts():
                 except:
                     pass
 
-            description = item.get("excerpt", {}).get("rendered", "")
+            description = html.unescape(item.get("excerpt", {}).get("rendered", ""))
 
             image_url = None
             if "_embedded" in item:
@@ -83,11 +84,14 @@ def generate_rss(posts):
             <guid>{p['link']}</guid>
             <pubDate>{p['pubDate']}</pubDate>
             <description><![CDATA[{description}]]></description>
+            <content:encoded><![CDATA[{description}]]></content:encoded>
         </item>
         """
 
     rss = f"""<?xml version="1.0" encoding="UTF-8"?>
-    <rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
+    <rss version="2.0"
+         xmlns:media="http://search.yahoo.com/mrss/"
+         xmlns:content="http://purl.org/rss/1.0/modules/content/">
       <channel>
         <title>Curitiba Cult</title>
         <link>{URL}</link>
