@@ -10,46 +10,62 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0"
 }
 
-
 def fetch_posts():
-    res = requests.get(WP_API, headers=HEADERS, params={
-        "per_page": 20,
-        "_embed": "true"
-    }, timeout=10)
-    res.raise_for_status()
+    try:
+        res = requests.get(WP_API, headers=HEADERS, params={
+            "per_page": 20,
+            "_embed": "true"
+        }, timeout=10)
 
-    data = res.json()
+        print("Status:", res.status_code)
+
+        res.raise_for_status()
+        data = res.json()
+
+        if not isinstance(data, list):
+            print("Resposta inesperada:", data)
+            return []
+
+    except Exception as e:
+        print("Erro na requisição:", e)
+        return []
+
     posts = []
 
     for item in data:
-        title = item.get("title", {}).get("rendered", "").strip()
-        link = item.get("link", "")
-        date_str = item.get("date_gmt") or item.get("date")
-
         try:
-            dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-        except Exception:
+            title = item.get("title", {}).get("rendered", "").strip()
+            link = item.get("link", "")
+            date_str = item.get("date_gmt") or item.get("date")
+
             dt = datetime.utcnow()
+            if date_str:
+                try:
+                    dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+                except:
+                    pass
 
-        description = item.get("excerpt", {}).get("rendered", "")
+            description = item.get("excerpt", {}).get("rendered", "")
 
-        # Try to get featured image
-        image_url = None
-        if "_embedded" in item:
-            media = item["_embedded"].get("wp:featuredmedia")
-            if media and isinstance(media, list):
-                image_url = media[0].get("source_url")
+            image_url = None
+            if "_embedded" in item:
+                media = item["_embedded"].get("wp:featuredmedia")
+                if media and isinstance(media, list):
+                    image_url = media[0].get("source_url")
 
-        posts.append({
-            "title": title,
-            "link": link,
-            "pubDate": format_datetime(dt),
-            "description": description,
-            "image": image_url
-        })
+            posts.append({
+                "title": title,
+                "link": link,
+                "pubDate": format_datetime(dt),
+                "description": description,
+                "image": image_url
+            })
+
+        except Exception as e:
+            print("Erro ao processar post:", e)
+            continue
 
     return posts
-
 
 def generate_rss(posts):
     items = ""
@@ -90,7 +106,7 @@ if __name__ == "__main__":
     posts = fetch_posts()
 
     if not posts:
-        raise Exception("Nenhum post encontrado — verifique a API ou conexão")
+        print("Nenhum post encontrado, mas continuando...")
 
     rss = generate_rss(posts)
 
