@@ -1,5 +1,5 @@
 import requests
-from datetime import datetime
+from datetime import datetime, UTC
 from email.utils import format_datetime
 from xml.sax.saxutils import escape
 import html
@@ -21,7 +21,11 @@ def fetch_posts():
         print("Status:", res.status_code)
 
         res.raise_for_status()
-        data = res.json()
+        try:
+            data = res.json()
+        except Exception as e:
+            print("Erro ao fazer parse do JSON:", e)
+            return []
 
         if not isinstance(data, list):
             print("Resposta inesperada:", data)
@@ -39,20 +43,20 @@ def fetch_posts():
             link = item.get("link", "")
             date_str = item.get("date_gmt") or item.get("date")
 
-            dt = datetime.utcnow()
-            if date_str:
+            dt = datetime.now(UTC)
+            if isinstance(date_str, str):
                 try:
                     dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-                except:
-                    pass
+                except Exception as e:
+                    print("Erro ao parsear data:", e)
 
             description = html.unescape(item.get("excerpt", {}).get("rendered", ""))
 
             image_url = None
-            if "_embedded" in item:
-                media = item["_embedded"].get("wp:featuredmedia")
-                if media and isinstance(media, list):
-                    image_url = media[0].get("source_url")
+            embedded = item.get("_embedded", {})
+            media = embedded.get("wp:featuredmedia", [])
+            if isinstance(media, list) and len(media) > 0:
+                image_url = media[0].get("source_url")
 
             posts.append({
                 "title": title,
@@ -97,7 +101,7 @@ def generate_rss(posts):
         <link>{URL}</link>
         <description>Últimos posts do Curitiba Cult</description>
         <language>pt-BR</language>
-        <lastBuildDate>{format_datetime(datetime.utcnow())}</lastBuildDate>
+        <lastBuildDate>{format_datetime(datetime.now(UTC))}</lastBuildDate>
         {items}
       </channel>
     </rss>
@@ -110,7 +114,7 @@ if __name__ == "__main__":
     posts = fetch_posts()
 
     if not posts:
-        print("Nenhum post encontrado, mas continuando...")
+        print("Nenhum post encontrado — gerando feed vazio")
 
     rss = generate_rss(posts)
 
