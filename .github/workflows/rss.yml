@@ -2,7 +2,7 @@ name: Generate RSS Feed
 
 on:
   schedule:
-    - cron: "0 9 * * *"
+    - cron: "0 */4 * * *"
   workflow_dispatch:
 
 jobs:
@@ -24,15 +24,14 @@ jobs:
         run: |
           pip install requests
 
-      - name: Generate RSS
+      - name: Generate RSS Feeds
         run: |
-          python "Curitiba Cult RSS/curitibacult_rss.py"
-          python "O Que Fazer Curitiba RSS/oquefazercwb_rss.py"
+          python generate_rss_feeds.py
 
       - name: Commit and push if changed
         run: |
           git config --global user.name "rss-bot"
           git config --global user.email "rss@bot.com"
-          git add "Curitiba Cult RSS/feed.xml" "O Que Fazer Curitiba RSS/feed.xml"
+          git add "*/feed.xml"
           git commit -m "Update RSS feeds" || echo "No changes to commit"
           git push
