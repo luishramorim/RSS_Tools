@@ -1,4 +1,5 @@
 import requests
+import os
 from datetime import datetime, UTC
 from email.utils import format_datetime
 from xml.sax.saxutils import escape
@@ -123,7 +124,11 @@ if __name__ == "__main__":
 
     rss = generate_rss(posts)
 
-    with open("feed.xml", "w", encoding="utf-8") as f:
+    # Save feed.xml in the same directory as this script regardless of where it's executed
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    feed_path = os.path.join(script_dir, "feed.xml")
+
+    with open(feed_path, "w", encoding="utf-8") as f:
         f.write(rss)
 
     print(f"Feed gerado com {len(posts)} posts")
