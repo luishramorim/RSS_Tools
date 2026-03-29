@@ -51,6 +51,7 @@ def fetch_posts():
                     print("Erro ao parsear data:", e)
 
             description = html.unescape(item.get("excerpt", {}).get("rendered", ""))
+            content = html.unescape(item.get("content", {}).get("rendered", ""))
 
             image_url = None
             embedded = item.get("_embedded", {})
@@ -63,6 +64,7 @@ def fetch_posts():
                 "link": link,
                 "pubDate": format_datetime(dt),
                 "description": description,
+                "content": content,
                 "image": image_url
             })
 
@@ -76,10 +78,13 @@ def generate_rss(posts):
     items = ""
 
     for p in posts:
-        description = p["description"] or ""
+        description = p.get("description", "") or ""
+        content = p.get("content", "") or ""
 
-        if p["image"]:
-            description = f'<img src="{p["image"]}"/><br/>' + description
+        if p.get("image"):
+            image_tag = f'<img src="{p["image"]}"/><br/>'
+            description = image_tag + description
+            content = image_tag + content
 
         items += f"""
         <item>
@@ -88,7 +93,7 @@ def generate_rss(posts):
             <guid>{p['link']}</guid>
             <pubDate>{p['pubDate']}</pubDate>
             <description><![CDATA[{description}]]></description>
-            <content:encoded><![CDATA[{description}]]></content:encoded>
+            <content:encoded><![CDATA[{content}]]></content:encoded>
         </item>
         """
 
