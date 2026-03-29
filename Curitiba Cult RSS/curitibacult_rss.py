@@ -82,6 +82,12 @@ def generate_rss(posts):
         description = p.get("description", "") or ""
         content = p.get("content", "") or ""
 
+        # O usuário quer o conteúdo completo em todos os leitores de RSS.
+        # Leitores simples usam a tag <description> em vez de <content:encoded>.
+        # Substituímos o 'description' (resumo) pelo 'content' (matéria inteira).
+        if content:
+            description = content
+
         if p.get("image"):
             image_tag = f'<img src="{p["image"]}"/><br/>'
             description = image_tag + description
