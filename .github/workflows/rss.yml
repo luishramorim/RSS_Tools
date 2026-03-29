@@ -26,13 +26,13 @@ jobs:
 
       - name: Generate RSS
         run: |
-          cd "Curitiba Cult RSS"
-          python curitibacult_rss.py
+          python "Curitiba Cult RSS/curitibacult_rss.py"
+          python "O Que Fazer Curitiba RSS/oquefazercwb_rss.py"
 
       - name: Commit and push if changed
         run: |
           git config --global user.name "rss-bot"
           git config --global user.email "rss@bot.com"
-          git add "Curitiba Cult RSS/feed.xml"
-          git commit -m "Update RSS feed" || echo "No changes to commit"
+          git add "Curitiba Cult RSS/feed.xml" "O Que Fazer Curitiba RSS/feed.xml"
+          git commit -m "Update RSS feeds" || echo "No changes to commit"
           git push
